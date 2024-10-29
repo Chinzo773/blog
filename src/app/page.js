@@ -1,95 +1,81 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client'
 
-export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.js</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import { useEffect, useState } from "react"
+import Block from "./components/block"
+import Parent from './components/Parent'
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+const Page = () => {
+    const [data, setData] = useState([])
+    const [page, setPage] = useState(1)
+    const [search, setSearch] = useState('')
+
+    const fetchData = async () => {
+        try {
+            const dataRaw = await fetch(`https://dev.to/api/articles?per_page=9&page=${page}`);
+            const datas = await dataRaw.json();
+            const filteredData = datas.filter(item => 
+                item.title.toLowerCase().includes(search.toLowerCase())
+            );
+            setData(filteredData);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    }
+
+    useEffect(() => {
+        fetchData();
+    }, [page, search]);
+
+    useEffect(() => {
+        console.log(data);
+    }, [data]);
+
+    const handleSearchChange = (e) => {
+        setSearch(e.target.value);
+        setPage(1); // Reset page to 1 on new search
+    };
+
+    return (
+        <Parent>
+            <div>
+                <input 
+                    type="text" 
+                    placeholder="Search articles..." 
+                    onChange={handleSearchChange} 
+                />
+                <div id="outerContainer">
+                    {data.length > 0 ? (
+                        data.map(item => (
+                            <Block key={item.id} data={item} />
+                        ))
+                    ) : (
+                        <p>No articles found.</p>
+                    )}
+                </div>
+                <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
+                    <div className="butt">
+                        <button
+                            className="prev"
+                            onClick={() => {
+                                if (page > 1) setPage(page - 1);
+                            }}
+                        >
+                            Previous Page
+                        </button>
+                    </div>
+                    <span className="page-number">Page {page}</span>
+                    <div className="nextbutt">
+                        <button
+                            className="next"
+                            onClick={() => setPage(page + 1)}
+                        >
+                            Next Page
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Parent>
+    );
 }
+
+export default Page;
